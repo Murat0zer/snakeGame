@@ -1,0 +1,35 @@
+#:kivy 1.9.1
+
+<Playground>
+    snake: snake_id
+    fruit: fruit_id
+
+    Snake:
+        id: snake_id
+        width: root.width/root.satir_sayi
+        height: root.height/root.sutun_sayi
+
+    Fruit:
+        id: fruit_id
+        width: root.width/root.satir_sayi
+        height: root.height/root.sutun_sayi
+
+    Label:
+        font_size: 70
+        center_x: root.x + root.width/root.satir_sayi*2
+        top: root.top - root.height/root.satir_sayi
+        text: str(root.skor)
+
+<Snake>
+    head: snake_head_id
+    tail: snake_tail_id
+
+    SnakeHead:
+        id: snake_head_id
+        width: root.width
+        height: root.height
+
+    SnakeTail:
+        id: snake_tail_id
+        width: root.width
+        height: root.height
