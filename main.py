@@ -3,7 +3,7 @@ __version__ = '1.9.1'
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.properties import *
-import Canvas
+from kivy.graphics import *
 
 
 class OyunAlani(Widget):
@@ -22,13 +22,14 @@ class OyunAlani(Widget):
     eylem_tetiklendi = BooleanProperty()
 
 
-
 class Meyve(Widget):
     duration = NumericProperty(10)
     interval = NumericProperty(3)
 
     object_on_board = ObjectProperty(None)
     durum = BooleanProperty(False)
+
+
 class Yilan(Widget):
     kafa = ObjectProperty(None)
     kuyruk = ObjectProperty(None)
@@ -63,9 +64,64 @@ class YilanKafa(Widget):
     y_pozisyonu = NumericProperty(0)
     pozisyon = ReferenceListProperty(x_pozisyonu, y_pozisyonu)
 
-    puanlar = ListProperty([0]*6)
+    points = ListProperty([0]*6)
     object_onboard = ObjectProperty(None)
     durum = BooleanProperty(False)
+
+    def is_on_board(self):
+        return self.durum
+
+    def sil(self):
+        if self.is_on_board():
+            self.canvas.remove(self.object_onboard)
+            self.object_onboard = ObjectProperty(None)
+            self.durum = False
+
+    def ciz(self):
+        with self.canvas:
+            if not self.is_on_board():
+                self.object_onboard = Triangle(points=self.puanlar)
+                self.durum = True #
+            else:
+                self.canvas.remove(self.object_onboard)
+                self.object_onboard = Triangle(points=self.puanlar)
+
+    def hareket(self):
+        if self.yon == "Right":
+            self.pozisyon[0] += 1
+            x0 = self.pozisyon[0] * self.width
+            y0 = (self.pozisyon[1] - 0.5) * self.height
+            x1 = x0 + self.width
+            y1 = y0 + self.height / 2
+            x2 = x0 - self.width
+            y2 = y0 - self.height / 2
+        elif self.yon == "Left":
+            self.pozisyon[0] -= 1
+            x0 = (self.pozisyon[0] - 1) * self.width
+            y0 = (self.pozisyon[0] - 0.5) * self.height
+            x1 = x0 + self.width
+            y1 = y0 + self.height / 2
+            x2 = x0 + self.width
+            y2 = y0 + self.height / 2
+        elif self.pozisyon == "Up":
+            self.pozisyon[1] += 1
+            x0 = (self.pozisyon[0] - 0.5) * self.width
+            y0 = self.pozisyon[1] * self.height
+            x1 = x0 - self.width / 2
+            y1 = y0 - self.height
+            x2 = x0 + self.width / 2
+            y2 = y0 - self.height
+        elif self.yon == "Down":
+            self.pozisyon[1] -= 1
+            x0 = (self.position[0] - 0.5) * self.width
+            y0 = (self.position[1] - 1) * self.height
+            x1 = x0 + self.width / 2
+            y1 = y0 + self.height
+            x2 = x0 - self.width / 2
+            y2 = y0 + self.height
+
+        self.points = [x0, y0, x1, y1, x2, y2]
+        self.ciz()
 
 
 
@@ -97,7 +153,7 @@ class YilanKuyruk(Widget):
                 x = (poz[0] - 1) * self.width
                 y = (poz[1] - 1) * self.height
                 koord = (x,y)
-                blok = Canvas.Rectangle(poz=koord, size=(self.width,
+                blok = Rectangle(poz=koord, size=(self.width,
                                                          self.height))
                 self.kuyruk_blok_objeleri.append(blok)
 
