@@ -4,7 +4,8 @@ from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.properties import *
 from kivy.graphics import *
-
+from random import randint
+from kivy import vector
 
 class OyunAlani(Widget):
     meyve = ObjectProperty(None)
@@ -21,6 +22,86 @@ class OyunAlani(Widget):
     dokunma_pozisyonu = ListProperty()
     eylem_tetiklendi = BooleanProperty()
 
+    def basla(self):
+        self.yeni_yilan()
+        self.update()
+
+    def reset(self):
+        self.donus_sayici = 0
+        self.skor = 0
+        self.yilan.sil()
+        self.meyve.sil()
+
+    def yeni_yilan(self):
+        baslangic_koord = (randint(2, self.satir_sayi - 2),
+                           randint(2, self.sutun_sayi - 2))
+
+        self.yilan.pozisyon_ayarla(baslangic_koord)
+        rand_indis = randint(0, 3)
+        baslangic_yon =["Up", "Down", "Left", "Right"][rand_indis]
+        self.yilan.yon_ayarla(baslangic_koord)
+
+    def meyve_cikar(self, *args):
+        random_koord = [
+            randint(1, self.satir_sayi), randint(1, self.sutun_sayi)]
+
+    # yilanin oldugu hucrelerin pozisyonlarini alioruz.
+        yilan_nerde = self.Yilan.tam_pozisyon_al()
+
+    # meyvenin oldugu yerde yilan varsa yeni meyve cikar
+        while random_koord in yilan_nerde:
+            random_koord = [
+            randint(1, self.satir_sayi), randint(1, self.sutun_sayi)]
+
+        self.meyve_cikar(random_koord)
+
+    def yenilgi_kontrol(self):
+        yilan_pozisyon = self.Yilan.pozisyon_al()
+        if yilan_pozisyon in self.YilanKuyruk.blok_pozisyonu:
+            return True
+        if yilan_pozisyon[0] > self.satir_sayi \
+            or yilan_pozisyon[0] < 1 \
+            or yilan_pozisyon[1] > self.sutun_sayi \
+            or yilan_pozisyon[1] < 1:
+            return True
+        return False
+
+    def update(self, *args):
+        self.Yilan.hareket()
+        if self.yenilgi_kontrol():
+            self.reset()
+            self.basla()
+            return
+
+        if self.Meyve.is_on_board():
+            if self.Yilan.pozisyon_al() == self.Meyve.poz:
+                self.Meyve.sil()
+                self.skor += 1
+                self.YilanKuyruk.size += 1
+        self.donus_sayici += 1
+
+    def on_touch_down(self, touch):
+        self.dokunma_baslgnc_poz = touch.spos
+
+    def on_touch_move(self, touch):
+        delta = vector(*touch.spos) - vector(*self.dokunma_baslgnc_poz)
+
+        if not self.eylem_tetiklendi \
+                and (abs(delta[0]) > 0.1 or abs(delta[1]) > 0.1):
+            if abs(delta[0]) > abs(delta[1]):
+                if delta[0] > 0:
+                    self.Yilan.yon_ayarla("Right")
+                else:
+                    self.Yilan.yon_ayarla("Left")
+            else:
+                if delta[1] > 0:
+                    self.Yilan.yon_ayarla("Up")
+                else:
+                    self.Yilan.yon_ayarla("Down")
+        self.eylem_tetiklendi = True
+
+    def on_touch_up(self, touch):
+        self.eylem_tetiklendi = False
 
 class Meyve(Widget):
     duration = NumericProperty(10)
@@ -28,6 +109,25 @@ class Meyve(Widget):
 
     object_on_board = ObjectProperty(None)
     durum = BooleanProperty(False)
+
+    def is_on_board(self):
+        return self.durum
+
+    def sil(self, *args):
+        if self.is_on_board():
+            self.canvas.remove(self.object_on_board)
+            self.object_on_board = ObjectProperty(None)
+            self.durum = False
+    def cikar(self, poz):
+        self.poz = poz
+
+        with self.canvas:
+            x = (poz[0] -1) * self.size[0]
+            y = (poz[1] -1) * self.size[1]
+            koord = (x, y)
+
+            self.object_on_board = Ellipse(pos=koord, size=self.size)
+            self.durum = True
 
 
 class Yilan(Widget):
